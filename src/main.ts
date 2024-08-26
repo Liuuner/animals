@@ -1,21 +1,28 @@
 import './style.css'
 
+
+const getFromLsOrElse = <T>(key: string, defaultValue: T): T => {
+    const item = localStorage.getItem(key);
+    return item ? (JSON.parse(item) as T) : defaultValue;
+}
+
+
 const canvas = document.getElementById('canvas') as HTMLCanvasElement;
 const ctx = canvas.getContext('2d');
 const PI = Math.PI;
-canvas.width = document.body.clientWidth * 0.9;
-canvas.height = document.body.clientHeight * 0.9;
+canvas.width = getFromLsOrElse<number>("WIDTH", document.body.clientWidth * 0.9);
+canvas.height = getFromLsOrElse<number>("HEIGHT", document.body.clientHeight * 0.9);
 const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
-const DESIRED_DISTANCE = 30;
-const MAX_ANGLE = Math.PI / 3;
+const DISTANCE_CONSTRAINT = getFromLsOrElse<number>("DISTANCE_CONSTRAINT", 30);
+const MAX_ANGLE = getFromLsOrElse<number>("MAX_ANGLE", Math.PI / 3);
 
 const MAX_SPEED = 5;
 const SPEED_MULTIPLIER = 0.03;
 // For Easing Method
-const MAX_SPEED_DISTANCE = 200;
-const MAX_SPEED_DISTANCE_VISIBLE = false;
-const SPEED_MULTIPLIER_EASING = 6;
+const MAX_SPEED_DISTANCE = getFromLsOrElse<number>("MAX_SPEED_DISTANCE", 200);
+const MAX_SPEED_DISTANCE_VISIBLE = getFromLsOrElse<boolean>("MAX_SPEED_DISTANCE_VISIBLE", false);
+const SPEED_MULTIPLIER_EASING = getFromLsOrElse<number>("SPEED_MULTIPLIER_EASING", 6);
 
 class Target {
     x: number;
@@ -136,8 +143,8 @@ function update() {
         let newY = p0.y + p0.ySpeed;
         let angle = Math.atan2(p1.y - p0.y, p1.x - p0.x);
 
-        p1.x = p0.x + Math.cos(angle) * DESIRED_DISTANCE;
-        p1.y = p0.y + Math.sin(angle) * DESIRED_DISTANCE;
+        p1.x = p0.x + Math.cos(angle) * DISTANCE_CONSTRAINT;
+        p1.y = p0.y + Math.sin(angle) * DISTANCE_CONSTRAINT;
 
         // For geradeaus
         // let movementAngle = Math.atan2(p0.ySpeed, p0.xSpeed);
@@ -180,12 +187,12 @@ function update() {
         p0.ySpeed = Math.sin(movementAngle) * speed;
 
         // Logic for boouncing off the walls
-        /*if (newX - DESIRED_DISTANCE <= 0 || newX + DESIRED_DISTANCE >= WIDTH || newY - DESIRED_DISTANCE <= 0 || newY + DESIRED_DISTANCE >= HEIGHT) {
+        /*if (newX - DISTANCE_CONSTRAINT <= 0 || newX + DISTANCE_CONSTRAINT >= WIDTH || newY - DISTANCE_CONSTRAINT <= 0 || newY + DISTANCE_CONSTRAINT >= HEIGHT) {
             let angleAdjustment = Math.PI / 180;
-            if (newX - DESIRED_DISTANCE <= 0 || newX + DESIRED_DISTANCE >= WIDTH) {
+            if (newX - DISTANCE_CONSTRAINT <= 0 || newX + DISTANCE_CONSTRAINT >= WIDTH) {
                 movementAngle = Math.PI - movementAngle;
             }
-            if (newY - DESIRED_DISTANCE <= 0 || newY + DESIRED_DISTANCE >= HEIGHT) {
+            if (newY - DISTANCE_CONSTRAINT <= 0 || newY + DISTANCE_CONSTRAINT >= HEIGHT) {
                 movementAngle = -movementAngle;
             }
             movementAngle += angleAdjustment;
@@ -194,8 +201,8 @@ function update() {
             p0.xSpeed = Math.cos(movementAngle) * speed;
             p0.ySpeed = Math.sin(movementAngle) * speed;
         } else {*/
-            p0.x = newX;
-            p0.y = newY;
+        p0.x = newX;
+        p0.y = newY;
         // }
     }
 
@@ -213,16 +220,16 @@ function update() {
 
         if (Math.abs(diffAngle) > MAX_ANGLE) {
             const newAngle = angle1 + Math.sign(diffAngle) * MAX_ANGLE;
-            p2.x = p1.x + Math.cos(newAngle) * DESIRED_DISTANCE;
-            p2.y = p1.y + Math.sin(newAngle) * DESIRED_DISTANCE;
+            p2.x = p1.x + Math.cos(newAngle) * DISTANCE_CONSTRAINT;
+            p2.y = p1.y + Math.sin(newAngle) * DISTANCE_CONSTRAINT;
         } else {
             const dx = p1.x - p2.x;
             const dy = p1.y - p2.y;
             const distance = Math.sqrt(dx * dx + dy * dy);
-            if (distance !== DESIRED_DISTANCE) {
+            if (distance !== DISTANCE_CONSTRAINT) {
                 const angle = Math.atan2(dy, dx);
-                p2.x = p1.x - Math.cos(angle) * DESIRED_DISTANCE;
-                p2.y = p1.y - Math.sin(angle) * DESIRED_DISTANCE;
+                p2.x = p1.x - Math.cos(angle) * DISTANCE_CONSTRAINT;
+                p2.y = p1.y - Math.sin(angle) * DISTANCE_CONSTRAINT;
             }
         }
     }
