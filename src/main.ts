@@ -3,6 +3,9 @@ import './style.css'
 
 const getFromLsOrElse = <T>(key: string, defaultValue: T): T => {
     const item = localStorage.getItem(key);
+    if (!item) {
+        localStorage.setItem(key, null);
+    }
     return item ? (JSON.parse(item) as T) : defaultValue;
 }
 
@@ -50,7 +53,7 @@ class Target {
 }
 
 // const sizes = [52, 58, 40, 60, 68, 71, 65, 50, 28, 15, 11, 9, 7, 7, 10, 10, 10, 10, 10, 10];
-const sizes = 13;
+const sizes = getFromLsOrElse<number>("SIZE", 13);
 let target = new Target(0, 0);
 
 window.addEventListener("mousemove", (e) => {
