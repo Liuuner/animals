@@ -6,6 +6,9 @@ const getFromLsOrElse = <T>(key: string, defaultValue: T): T => {
     if (!item) {
         localStorage.setItem(key, null);
     }
+    if (item === "null") {
+        return defaultValue;
+    }
     return item ? (JSON.parse(item) as T) : defaultValue;
 }
 
