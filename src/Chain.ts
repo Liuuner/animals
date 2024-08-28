@@ -1,5 +1,5 @@
 import Vector from "./Vector.ts";
-import {easeOutCubic} from "./Utils.ts";
+import {easeOutCubic, toReversed} from "./Utils.ts";
 
 const SPEED_MULTIPLIER_EASING = 10;
 const MAX_SPEED_DISTANCE = 200;
@@ -114,7 +114,7 @@ class Chain {
         }
 
         // Joints
-        this.joints.toReversed().map(j => {
+        toReversed(this.joints).map(j => {
             ctx.fillStyle = '#2a3340';
             ctx.strokeStyle = '#fff';
             ctx.lineWidth = 4;

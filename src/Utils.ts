@@ -5,7 +5,7 @@ function easeOutCubic(t: number): number {
 const getFromLsOrElse = <T>(key: string, defaultValue: T): T => {
     const item = localStorage.getItem(key);
     if (!item) {
-        localStorage.setItem(key, null);
+        localStorage.setItem(key, "null");
     }
     if (item === "null") {
         return defaultValue;
@@ -13,7 +13,12 @@ const getFromLsOrElse = <T>(key: string, defaultValue: T): T => {
     return item ? (JSON.parse(item) as T) : defaultValue;
 }
 
+const toReversed = (a: any[]) => {
+    return [...a].reverse()
+}
+
 export {
     easeOutCubic,
-    getFromLsOrElse
+    getFromLsOrElse,
+    toReversed
 };
