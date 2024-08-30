@@ -12,10 +12,14 @@ canvas.height = getFromLsOrElse<number>("HEIGHT", document.body.clientHeight * 0
 const WIDTH = canvas.width;
 const HEIGHT = canvas.height;
 const MAX_SPEED_DISTANCE = getFromLsOrElse<number>("MAX_SPEED_DISTANCE", 200);
-const MAX_SPEED_DISTANCE_VISIBLE = getFromLsOrElse<boolean>("MAX_SPEED_DISTANCE_VISIBLE", true);
+const MAX_SPEED_DISTANCE_VISIBLE = getFromLsOrElse<boolean>("MAX_SPEED_DISTANCE_VISIBLE", false);
+const JOINT_COUNT = getFromLsOrElse<number>("JOINT_COUNT", 23);
+const DISTANCE_CONSTRAINT = getFromLsOrElse<number>("DISTANCE_CONSTRAINT", 33);
+const ANGLE_CONSTRAINT = getFromLsOrElse<number>("ANGLE_CONSTRAINT", Math.PI/3);
+const STOP_DISTANCE = getFromLsOrElse<number>("ANGLE_CONSTRAINT", 10);
 
 const origin = new Vector(WIDTH / 2, HEIGHT / 2);
-const chain = new Chain(origin, 23, 33, Math.PI/3, 10)
+const chain = new Chain(origin, JOINT_COUNT, DISTANCE_CONSTRAINT, ANGLE_CONSTRAINT)
 
 let target = origin.copy();
 
@@ -46,7 +50,7 @@ function loop() {
 
     drawTarget(ctx);
     chain.update(target);
-    chain.draw(ctx);
+    chain.draw(ctx, target);
     requestAnimationFrame(loop);
 }
 
