@@ -1,27 +1,33 @@
 import Vector from "./Vector.ts";
-import {easeOutCubic, toReversed} from "./Utils.ts";
-
-const SPEED_MULTIPLIER_EASING = 10;
-const MAX_SPEED_DISTANCE = 200;
-const JOINT_SIZE = 8;
+import {cubicBezier, easeOutCubic, toReversed} from "./Utils.ts";
 
 
 class Chain {
+    static DEFAULT_CONFIG: Config = {
+        speedMultiplierEasing: 10,
+        maxSpeedDistance: 200,
+        jointSize: 8,
+        // todo implement logic for this
+        turnSpeed: "instant",
+        // todo speed = easing(stopDistance + distance)
+        stopDistance: 3,
+    }
+
+    config: Config;
     private distanceConstraint: number;
     private angleConstraint: number;
     // TODO Temp
-    private stopDistance: number;
     joints: Vector[] = [];
     angles: number[] = [];
 
 
-    constructor(origin: Vector, jointCount: number, distanceConstraint: number, angleConstraint: number, stopDistance: number) {
+    constructor(origin: Vector, jointCount: number, distanceConstraint: number, angleConstraint: number, config: Partial<Config> = {}) {
         if (jointCount < 1) throw new Error("jointCount can't be less than 1")
-        if (distanceConstraint < 1) throw new Error("distanceConstraint can't be less than 1")
+        if (distanceConstraint <= 0) throw new Error("distanceConstraint can't be negative/zero")
 
+        this.config = { ...Chain.DEFAULT_CONFIG, ...config };
         this.distanceConstraint = distanceConstraint;
         this.angleConstraint = angleConstraint;
-        this.stopDistance = stopDistance;
 
         this.joints.push(origin.copy());
         this.angles.push(0);
@@ -45,11 +51,13 @@ class Chain {
         const targetAngle = Math.atan2(deltaY, deltaX);
         const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-        if (distance < this.stopDistance) return;
+        if (distance < this.config.stopDistance) return;
 
-        const normalizedDistance = Math.min(1, (distance - 10) / MAX_SPEED_DISTANCE); // 100 is an arbitrary max distance, adjust as needed
-        // Apply easing function
-        const speed = easeOutCubic(normalizedDistance) * SPEED_MULTIPLIER_EASING;
+        const normalizedDistance = Math.min(1, (distance) / this.config.maxSpeedDistance);
+        // Apply easing function ((should be) easeOutCubic in this case 0.33, 1, 0.68, 1)
+        // const speed = cubicBezier(normalizedDistance,.12,.58,.33,1) * this.config.speedMultiplierEasing
+        const speed = easeOutCubic(normalizedDistance) * this.config.speedMultiplierEasing;
+
 
         const speedX = Math.cos(targetAngle) * speed;
         const speedY = Math.sin(targetAngle) * speed;
@@ -99,7 +107,7 @@ class Chain {
     }
 
 
-    draw(ctx: CanvasRenderingContext2D | null) {
+    draw(ctx: CanvasRenderingContext2D | null, target: Vector) {
         if (!ctx) return;
 
         // Connections
@@ -119,11 +127,38 @@ class Chain {
             ctx.strokeStyle = '#fff';
             ctx.lineWidth = 4;
             ctx.beginPath();
-            ctx.arc(j.x, j.y, JOINT_SIZE, 0, Math.PI * 2);
+            ctx.arc(j.x, j.y, this.config.jointSize, 0, Math.PI * 2);
             ctx.fill()
             ctx.stroke();
         });
+
+        // draw todo just trying
+        const head = this.joints[0]
+
+        const deltaX = target.x - head.x;
+        const deltaY = target.y - head.y;
+        const targetAngle = Math.atan2(deltaY, deltaX);
+
+        const newX = head.x + this.config.maxSpeedDistance * Math.cos(targetAngle); // Calculate the new x coordinate
+        const newY = head.y + this.config.maxSpeedDistance * Math.sin(targetAngle); // Calculate the new y coordinate
+
+        ctx.strokeStyle = '#617590';
+
+        ctx.beginPath();
+        ctx.arc(head.x, head.y, this.config.maxSpeedDistance, 0, Math.PI * 2);
+        ctx.stroke();
     }
 }
+
+type Config = {
+    speedMultiplierEasing: number;
+    maxSpeedDistance: number;
+    jointSize: number;
+    stopDistance: number;
+    /**
+     * Radian
+     **/
+    turnSpeed: number | "instant"
+};
 
 export default Chain;
