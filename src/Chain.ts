@@ -1,11 +1,13 @@
 import Vector from "./Vector.ts";
-import {cubicBezier, easeOutCubic, toReversed} from "./Utils.ts";
+import {easeOutCubic, toReversed} from "./Utils.ts";
 
 
 class Chain {
     static DEFAULT_CONFIG: Config = {
         speedMultiplierEasing: 10,
         maxSpeedDistance: 200,
+        maxSpeedDistancePreviewWidth: Math.PI / 5,
+        maxSpeedDistancePreviewEnabled: false,
         jointSize: 8,
         // todo implement logic for this
         turnSpeed: "instant",
@@ -25,7 +27,7 @@ class Chain {
         if (jointCount < 1) throw new Error("jointCount can't be less than 1")
         if (distanceConstraint <= 0) throw new Error("distanceConstraint can't be negative/zero")
 
-        this.config = { ...Chain.DEFAULT_CONFIG, ...config };
+        this.config = {...Chain.DEFAULT_CONFIG, ...config};
         this.distanceConstraint = distanceConstraint;
         this.angleConstraint = angleConstraint;
 
@@ -112,9 +114,10 @@ class Chain {
 
         // Connections
         for (let i = 1; i < this.joints.length; i++) {
-            const p1 = this.joints[i-1]
+            const p1 = this.joints[i - 1]
             const p2 = this.joints[i]
 
+            ctx.strokeStyle = '#708ab9'
             ctx.beginPath();
             ctx.moveTo(p1.x, p1.y);
             ctx.lineTo(p2.x, p2.y);
@@ -132,27 +135,45 @@ class Chain {
             ctx.stroke();
         });
 
-        // draw todo just trying
+        if (!this.config.maxSpeedDistancePreviewEnabled) return;
         const head = this.joints[0]
 
         const deltaX = target.x - head.x;
         const deltaY = target.y - head.y;
         const targetAngle = Math.atan2(deltaY, deltaX);
+        const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
-        const newX = head.x + this.config.maxSpeedDistance * Math.cos(targetAngle); // Calculate the new x coordinate
-        const newY = head.y + this.config.maxSpeedDistance * Math.sin(targetAngle); // Calculate the new y coordinate
+        const normalizedDistance = Math.min(1, (distance) / this.config.maxSpeedDistance);
+        const speed = Math.max(easeOutCubic(normalizedDistance - 0.4), 0);
 
-        ctx.strokeStyle = '#617590';
+        const alphaValue = Math.floor(speed * 255);
+        const alphaChannel = alphaValue.toString(16).padStart(2, '0');
+
+        ctx.strokeStyle = '#617590' + alphaChannel;
 
         ctx.beginPath();
-        ctx.arc(head.x, head.y, this.config.maxSpeedDistance, 0, Math.PI * 2);
+        ctx.arc(head.x, head.y, this.config.maxSpeedDistance, targetAngle - this.config.maxSpeedDistancePreviewWidth /2, targetAngle + this.config.maxSpeedDistancePreviewWidth / 2);
         ctx.stroke();
     }
+
+
+/*    getPosX(i: number, angleOffset: number, lengthOffset: number) {
+    return this.joints[i].x + Math.cos(this.angles[i] + angleOffset) * (bodyWidth(i) + lengthOffset);
+}
+
+float getPosY(int i, float angleOffset, float lengthOffset) {
+    return this.joints[i].y + Math.sin(this.angles[i] + angleOffset) * (bodyWidth[i] + lengthOffset);
+}*/
 }
 
 type Config = {
     speedMultiplierEasing: number;
     maxSpeedDistance: number;
+    maxSpeedDistancePreviewEnabled: boolean;
+    /**
+     * Radian
+     **/
+    maxSpeedDistancePreviewWidth: number;
     jointSize: number;
     stopDistance: number;
     /**
