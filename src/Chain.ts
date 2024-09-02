@@ -1,5 +1,6 @@
 import Vector from "./Vector.ts";
 import {easeOutCubic, toReversed} from "./Utils.ts";
+import Angle from "./Angle.ts";
 
 
 class Chain {
@@ -9,15 +10,17 @@ class Chain {
         maxSpeedDistancePreviewWidth: Math.PI / 5,
         maxSpeedDistancePreviewEnabled: false,
         jointSize: 8,
-        // todo implement logic for this
+        // todo implement logic for this, not so good
         turnSpeed: "instant",
         // todo speed = easing(stopDistance + distance)
+        // edit: maybe not
         stopDistance: 3,
     }
 
     config: Config;
     private distanceConstraint: number;
     private angleConstraint: number;
+    private headAngle= new Angle(Math.PI/2);
     // TODO Temp
     joints: Vector[] = [];
     angles: number[] = [];
@@ -40,6 +43,7 @@ class Chain {
         }
     }
 
+
     update(target: Vector) {
         if (this.joints.length === 2) {
             // TODO implement (hopefully) simple logic
@@ -50,7 +54,8 @@ class Chain {
 
         const deltaX = target.x - head.x;
         const deltaY = target.y - head.y;
-        const targetAngle = Math.atan2(deltaY, deltaX);
+        const targetAngle = new Angle(Math.atan2(deltaY, deltaX));
+        this.headAngle.turnTowards(targetAngle, this.config.turnSpeed)
         const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
 
         if (distance < this.config.stopDistance) return;
@@ -61,8 +66,8 @@ class Chain {
         const speed = easeOutCubic(normalizedDistance) * this.config.speedMultiplierEasing;
 
 
-        const speedX = Math.cos(targetAngle) * speed;
-        const speedY = Math.sin(targetAngle) * speed;
+        const speedX = Math.cos(this.headAngle.radians) * speed;
+        const speedY = Math.sin(this.headAngle.radians) * speed;
 
 
         const newHeadX = head.x + speedX;
@@ -135,6 +140,16 @@ class Chain {
             ctx.stroke();
         });
 
+        // Body
+        /*this.joints.map((j, i) => {
+            ctx.strokeStyle = '#fff';
+            ctx.setLineDash([5,15])
+            ctx.beginPath();
+            ctx.arc(j.x, j.y, this.bodyWidth(i), 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.setLineDash([])
+        })*/
+
         if (!this.config.maxSpeedDistancePreviewEnabled) return;
         const head = this.joints[0]
 
@@ -152,18 +167,22 @@ class Chain {
         ctx.strokeStyle = '#617590' + alphaChannel;
 
         ctx.beginPath();
-        ctx.arc(head.x, head.y, this.config.maxSpeedDistance, targetAngle - this.config.maxSpeedDistancePreviewWidth /2, targetAngle + this.config.maxSpeedDistancePreviewWidth / 2);
+        ctx.arc(head.x, head.y, this.config.maxSpeedDistance, targetAngle - this.config.maxSpeedDistancePreviewWidth / 2, targetAngle + this.config.maxSpeedDistancePreviewWidth / 2);
         ctx.stroke();
     }
 
 
-/*    getPosX(i: number, angleOffset: number, lengthOffset: number) {
-    return this.joints[i].x + Math.cos(this.angles[i] + angleOffset) * (bodyWidth(i) + lengthOffset);
-}
+    bodyWidth(i: number) {
+        return 50
+    }
 
-float getPosY(int i, float angleOffset, float lengthOffset) {
-    return this.joints[i].y + Math.sin(this.angles[i] + angleOffset) * (bodyWidth[i] + lengthOffset);
-}*/
+    getPosX(i: number, angleOffset: number, lengthOffset: number) {
+        return this.joints[i].x + Math.cos(this.angles[i] + angleOffset) * (this.bodyWidth(i) + lengthOffset);
+    }
+
+    getPosY(i: number, angleOffset: number, lengthOffset: number) {
+        return this.joints[i].y + Math.sin(this.angles[i] + angleOffset) * (this.bodyWidth(i) + lengthOffset);
+    }
 }
 
 type Config = {
@@ -183,3 +202,4 @@ type Config = {
 };
 
 export default Chain;
+export type {Config}
